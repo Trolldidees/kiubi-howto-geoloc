@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- 
+Configuration du produit "Produit simple"
+-->
+<!DOCTYPE type SYSTEM "http://www.kiubi-admin.com/DTD/typesproduits.dtd"> 
+	<type tri="1">
+		<desc>Produit simple</desc>
+		<listechamps>
+			<champ type="text" champ="texte11" intitule="Latitude"/>
+			<champ type="text" champ="texte12" intitule="Longitude"/>
+		</listechamps>
+	</type>

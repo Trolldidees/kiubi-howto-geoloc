@@ -1,0 +1,213 @@
+<!-- 
+Template du Widget "Liste des produits"
+-->
+
+<!-- BEGIN: main -->
+<style>
+section #gmap img { max-width: none; }
+</style>
+<script type="text/javascript">
+var showMap = function() {
+	var nb_markers = 0, max_markers = parseInt("{widget_limit}");
+	$('section.section').css('width', '100%');
+	$('#page').css('max-width', '100%');	
+	$('#main').data('initfloat', $('#main').css('float'));
+	$('#main').css('width', 'auto').css('float', 'none').css('margin', 0);
+	$('.header_inner').css('padding', 0);
+	$('.copyright').css('margin', 0);
+	$('.copyright p').css('display', 'inline-block');
+	$('footer').css('padding', 0).css('border', 'none');
+	$('header#top .header_inner .menu_header').css('margin', 0).css('border', 'none');
+	$('header#top h2').css({margin:0, position: 'absolute', top: '5px', 'font-size': '1.8em'});
+	$('#liste-init,.chemin,#sub_header,#top h3,#top form,.sidebar,.logo,.menu_header time,footer .footer_inner,#message').hide();
+	$('#gmap').css('width', '100%').css('height', $(document).height()-$('header').height()-$('footer').height()).show().gmap3({
+		map:{
+			options:{
+				zoom:6,
+				scrollwheel: false
+			}
+		},
+		panel:{
+			options:{
+			  content: '<a id="map-backto-list" href="javascript:;">Affichage classique de la liste des produits</a>',
+			  bottom: 80,
+			  left: 0
+			}
+		  }
+	});	
+	$('#map-backto-list').css({'background-color':'#fff', color:'#000', padding:'10px 15px' }).parent().css('margin-top', '30px');
+	var xtra = {
+		'limit'        : parseInt("{widget_limit}"),
+		'sort'         : "{widget_order_api}",
+		'available'    : "{widget_dispo}",
+		'in_stock'     : "{widget_stock}",
+		'tags'         : "{widget_tags}",
+		'tags_rule'    : ("{widget_tags_logique}" == "et" ? "and" : "or"),
+		'extra_fields' : "texts,thumb,price_label,variants"
+	};
+	if('{widget_categorie_id}' == '') {		
+		var q = kiubi.catalog.getProducts(xtra);
+	} else {
+		var q = kiubi.catalog.getProductsByCategory(parseInt('{widget_categorie_id}'), xtra);
+	}
+	q.done(function(meta, data){
+		addMarkers(data);
+		if(kiubi.hasNextPage(meta) && nb_markers<max_markers){
+			getNextPage(meta);
+		}
+	});
+	var getNextPage = function(meta) {
+		var d = kiubi.getNextPage(meta);
+		d.done(function(meta, data){
+			addMarkers(data);
+			if(kiubi.hasNextPage(meta) && nb_markers<max_markers){
+				getNextPage(meta);
+			}
+		});
+	};
+	var addMarkers = function(data) {
+		for(var i=0; i<data.length; i++) {
+			if(!data[i].text11 || !data[i].text12 || nb_markers>=max_markers) continue;
+			nb_markers++;
+			
+			var html = '<div style="width:480px;height:320px">';
+			html += '<h2>'+data[i].name+'</h2>';
+			html += '<img style="float:left;margin-right:10px;" src="'+data[i].main_thumb.url_g_miniature+'"/>';				
+			html += '<div>'+data[i].header+'</div><br/>';
+			if(data[i].variants.length<2) {
+				html += '<p class="prix" style="color: #A6A6A6;font-size: 1.2em;">'+data[i].variants[0].price_inc_vat_label;
+				if(data[i].is_discounted)
+					html += ' <del style="color: #DF3F52;font-size: 0.8em;">'+data[i].price_base_inc_vat_label+'</del>';
+				html += '</p><br/>';
+			}
+			html += '<select class="p-info" '+(data[i].variants.length<2?' style="display:none;"':'')+'>';
+			for(var v=0; v<data[i].variants.length; v++) {
+				var va = data[i].variants[v];
+				html += '<option value="'+va.id+'" data-available="'+(va.is_available && va.in_stock)+'">'+va.name+' : '+va.price_inc_vat_label+'</option>';
+			}
+			html += '</select>';
+			html += '</div>';
+			$('#gmap').gmap3({
+				marker:{
+					values:[
+					  {latLng:[data[i].text11, data[i].text12], data:html}					  
+					],
+					events:{
+						click: function(marker, event, context){
+						  var map = $(this).gmap3("get"),
+							infowindow = $(this).gmap3({get:{name:"infowindow"}});
+						  if (infowindow){
+							infowindow.open(map, marker);
+							infowindow.setContent(context.data);
+						  } else {
+							$(this).gmap3({
+							  infowindow:{
+								anchor:marker,
+								options:{content: context.data},
+								events:{
+									domready: function(){
+										$(this).find('.p-info').change();
+									}
+								}
+							  }
+							});
+						  }
+						  $('.p-info').change();
+						}
+					}
+				}
+			});
+		}
+	};		
+};
+$(document).on('change', '.p-info', function(){
+	$(this).parent().find('input,p:not(.prix)').remove();
+	if($(this).find(':selected').data('available')==true) {
+		$(this).after('<input type="submit" class="bouton map-addtocart" value="Ajouter au panier"/>');
+	} else {
+		$(this).after('<p class="alerte">Article non disponible</p>');
+	}
+});
+
+$(document).on('click', '.map-addtocart', function(){
+	$(this).parent().find('p:not(.prix)').remove();
+	if($(this).prev('select').find(':selected').data('available')==true) {
+		var me = $(this);
+		var c = kiubi.cart.addItem($(this).prev('select').val(), '+1', null, {extra_fields: 'price_label'});
+		c.done(function(meta, data){
+			me.after('<p class="alerte">Produit ajout&eacute; au panier !</p>');
+			$('.panier_link div').remove();
+			$('.panier_link a').html(data.cart.items_count+' article'+(data.cart.items_count>1?'s':'')+' - '+data.cart.price_total_inc_vat_label);
+		});
+		c.fail(function(meta, error, data){
+			me.after('<p class="erreur">'+error.message+'</p>');
+		});
+	}
+});
+
+$(document).on('click', '#map-backto-list', function(){
+	$('#gmap').gmap3('destroy').hide();
+	$('section.section').css('width', '980px');
+	$('#page').css('max-width', '1060px');	
+	$('#main').css('float', $('#main').data('initfloat'));
+	$('#main').css('width', '').css('margin-bottom', '30px');
+	$('.copyright').css('margin', '0 auto 20px 0');
+	$('.copyright p').css('display', 'block');
+	$('footer').css('padding', '20px 0').css('border-top', '1px solid #CCCCCC');
+	$('header#top .header_inner .menu_header').css('margin', '0 0 40px').css('border-bottom', '1px solid #DDDDDD');
+	$('header#top h2').css({margin: '15px 0', position: 'relative', top: '', 'font-size': '3em'});
+	$('.header_inner').css('padding', '0 0 40px 0');
+	$('#liste-init,.chemin,#sub_header,#top h3,#top form,.sidebar,.logo,.menu_header time,footer .footer_inner,#message').show();
+});
+
+$(function(){
+	$('#liste-init').hide();
+	$('article.produits > p:first').append(' | <a href="javascript:showMap();">Afficher les produits sur une carte</a>');
+	showMap();	
+	$(window).resize(function(){
+		$('#gmap').gmap3('destroy').hide();
+		showMap();
+	});
+});
+</script>
+<div id="gmap"></div>
+<div id="liste-init">
+<article class="produits">
+  <!-- BEGIN:intitule -->
+  <header class="post_header">
+    <h1>{intitule}</h1>
+  </header>
+  <!-- END:intitule -->
+  <p><a href="{lien_affichage}=l">Affichage en liste</a> | <a href="{lien_affichage}=v">Affichage en vignette</a></p>
+  <div class="tri">
+    <select name="select" id="select" onchange="window.location.href=this.options[this.selectedIndex].value">
+      <option value="" >Trier par...</option>
+      <option value="{lien_tri}=po">Produit</option>
+      <option value="{lien_tri}=pi">Prix</option>
+      <option value="{lien_tri}=n">Note</option>
+      <option value="{lien_tri}=d">Date de disponibilit&eacute;</option>
+    </select>
+  </div>
+  {liste_produits}
+</article>
+  <!-- BEGIN: nav2 -->
+  <div class="nav">
+    <!-- BEGIN: premier -->
+    <a href="{lien_premier}" title="premi&egrave;re page">premi&egrave;re page</a>
+    <!-- END: premier -->
+    <!-- BEGIN: precedent -->
+    <a href="{lien_precedent}" title="page pr&eacute;c&eacute;dente">page pr&eacute;c&eacute;dente</a>
+    <!-- END: precedent -->
+    <!-- BEGIN: pages -->
+    <a href="{lien_page}" class="{selected}">{page}</a>
+    <!-- END: pages -->
+    <!-- BEGIN: suivant -->
+    <a href="{lien_suivant}" title="page suivante">page suivante</a>
+    <!-- END: suivant -->
+    <!-- BEGIN: dernier -->
+    <a href="{lien_dernier}" title="derni&egrave;re page">derni&egrave;re page</a>
+    <!-- END: dernier -->
+  </div>
+  <!-- END: nav2 -->
+</div>
+<!-- END: main -->

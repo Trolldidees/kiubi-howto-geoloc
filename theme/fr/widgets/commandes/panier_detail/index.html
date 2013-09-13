@@ -1,0 +1,273 @@
+<!-- 
+Template du Widget "Détail du panier"
+-->
+<!-- BEGIN:main -->
+<style>
+section #gmap img { max-width: none; }
+</style>
+<ul class="chemin_commande">
+  <li><a href="{baseLangue}/ecommerce/panier.html" title="Panier" class="actif">1. Panier</a></li>
+  <li>2. Authentification</li>
+  <li>3. Livraison</li>
+  <li>4. Mode de paiement</li>
+  <li>5. Validation</li>
+</ul>
+<article class="panier_detail">
+  <!-- BEGIN:intitule -->
+  <h1>{intitule}</h1>
+  <!-- END:intitule -->
+  <script type="text/javascript">
+	$(function(){
+		kiubi.cart.get().done(function(meta, data){
+			$('#gmap').css('width', '100%').css('height', '300px').show().gmap3({
+				map:{
+					options:{
+						zoom:5,
+						scrollwheel: false
+					}
+				}		
+			});
+			for(var i=0; i<data.items.length; i++) {
+				kiubi.catalog.getProduct(data.items[i].product_id, {extra_fields:'texts'}).done(function(meta, data){						
+					if(!data.text11 || !data.text12) return;
+
+					var html = '<div style="width:360px;height:150px">';
+					html += '<a href="'+data.url+'"><h2>'+data.name+'</h2></a>';
+					html += '<img style="float:left;margin-right:10px;" src="'+data.main_thumb.url_miniature+'"/>';	
+					html += '<div>'+data.header+'</div><br/>';
+					html += '</div>';
+					$('#gmap').gmap3({
+						marker:{
+							values:[
+							  {latLng:[data.text11, data.text12], data:html}					  
+							],
+							events:{
+								click: function(marker, event, context){
+								  var map = $(this).gmap3("get"),
+									infowindow = $(this).gmap3({get:{name:"infowindow"}});
+								  if (infowindow){
+									infowindow.open(map, marker);
+									infowindow.setContent(context.data);
+								  } else {
+									$(this).gmap3({
+									  infowindow:{
+										anchor:marker,
+										options:{content: context.data}
+									  }
+									});
+								  }
+								}
+							}
+						}
+					});
+				});
+			}
+		});
+	});
+	</script>
+	<div id="gmap"></div>
+  <!-- BEGIN:produits -->
+  <form method="post" action="">
+    <table class="table_commande">
+      <tr>
+        <th colspan="2" scope="col" style="width: 100%; text-align: left;">{nb_produits} article{pluriel_produits}</th>
+        <th nowrap="nowrap" scope="col">Prix</th>
+        <th scope="col" style="text-align: center;">Qte</th>
+        <th nowrap="nowrap" scope="col">Total</th>
+        <th scope="col" class="produit_supp">&nbsp;</th>
+      </tr>
+      <!-- BEGIN:produit -->
+      <tr>
+        <td style="width: {miniature_l}px;" class="produit_illustration"><!-- BEGIN:illustration -->
+          <figure><a href="{lien_produit}" title="{intitule_produit|htmlentities} - Cliquez pour acc&eacute;der"><img src="{racine}/media/miniature/{illustration}" alt="{intitule_produit|htmlentities}" class="illustration" /></a></figure>
+          <!-- END:illustration -->
+          <!-- BEGIN: noillustration -->
+          <figure><a href="{lien_produit}" title="{intitule_produit|htmlentities} - Cliquez pour acc&eacute;der"><img src="{racine}/{theme}/fr/images/produit_mini.gif" alt="{intitule_produit|htmlentities}" class="illustration" style="width: {miniature_l}px; height: {miniature_h}px;" /></a></figure>
+          <!-- END: noillustration --></td>
+        <td class="produit_info"><strong><a href="{lien_produit}">{intitule_produit}</a></strong><br />
+          <!-- BEGIN:reference -->
+          <p class="ref">Ref. : {reference}</p>
+          <!-- END:reference -->
+          <p class="variante">{intitule_variante}</p>
+          <!-- BEGIN:accroche -->
+          <p class="desc">{accroche}</p>
+          <!-- END:accroche --></td>
+        <td align="right" class="produit_pu">{prix_unitaire}</td>
+        <td nowrap="nowrap" class="produit_qte"><input name="qt[{ref}]" type="text" class="textfield" value="{qt}" style="width:30px" />
+          <!-- BEGIN:erreur_qt -->
+          <div class="erreurs">max. : {max}</div>
+          <!-- END:erreur_qt --></td>
+        <td align="right" class="produit_tt">{prix_total}</td>
+        <td class="produit_supp"><a href="{lien_supprimer}" title="Supprimer du panier">Supprimer</a></td>
+      </tr>
+      <!-- END:produit -->
+      <!-- BEGIN:option -->
+      <tr>
+		<!-- BEGIN:simple -->
+        <td colspan="2" style="text-align: left;">{intitule_option} <a href="{lien_supprimer}" title="Supprimer du panier" class="bt_supp">Supprimer</a></td>
+		<!-- BEGIN:offerte -->
+		<td>&nbsp;</td>
+		<td style="text-align: center;">{qt}</td>
+		<td>Offert</td>
+		<!-- END:offerte -->
+		<!-- BEGIN:payante -->
+		<td>{prix_unitaire}</td>
+		<td style="text-align: center;">{qt}</td>
+        <td>{prix_total}</td>
+		<!-- END:payante -->
+		<!-- END:simple -->
+		<!-- BEGIN:textarea -->
+        <td colspan="2" style="text-align: left;">{intitule_option} : {valeur_option} <a href="{lien_supprimer}" title="Supprimer du panier" class="bt_supp">Supprimer</a></td>
+		<!-- BEGIN:offerte -->
+		<td>&nbsp;</td>
+		<td style="text-align: center;">{qt}</td>
+		<td>Offert</td>
+		<!-- END:offerte -->
+		<!-- BEGIN:payante -->
+		<td>{prix_unitaire}</td>
+		<td style="text-align: center;">{qt}</td>
+        <td>{prix_total}</td>
+		<!-- END:payante -->
+		<!-- END:textarea -->
+		<!-- BEGIN:select -->
+        <td colspan="2" style="text-align: left;">{intitule_option} : {valeur_option} <a href="{lien_supprimer}" title="Supprimer du panier" class="bt_supp">Supprimer</a></td>
+		<!-- BEGIN:offerte -->
+		<td>&nbsp;</td>
+		<td style="text-align: center;">{qt}</td>
+		<td>Offert</td>
+		<!-- END:offerte -->
+		<!-- BEGIN:payante -->
+		<td>{prix_unitaire}</td>
+		<td style="text-align: center;">{qt}</td>
+        <td>{prix_total}</td>
+		<!-- END:payante -->
+		<!-- END:select -->
+        <td class="produit_supp"><a href="{lien_supprimer}" title="Supprimer du panier">Supprimer</a></td>
+      </tr>
+      <!-- END:option -->
+      <!-- BEGIN:bon -->
+      <tr>
+        <td colspan="4" style="text-align: left;">{intitule_produit} <a href="{lien_supprimer}" title="Supprimer du panier" class="bt_supp">Supprimer</a></td>
+        <td class="produit_tt">{prix_total}</td>
+        <td class="produit_supp"><a href="{lien_supprimer}" title="Supprimer du panier">Supprimer</a></td>
+      </tr>
+      <!-- END:bon -->
+      <!-- BEGIN:remise -->
+      <tr>
+        <td colspan="4" style="text-align: left;">{intitule_remise} <a href="{lien_supprimer}" title="Supprimer du panier" class="bt_supp">Supprimer</a></td>
+        <td align="right">&nbsp;</td>
+        <td class="produit_supp"><a href="{lien_supprimer}" title="Supprimer du panier">Supprimer</a></td>
+      </tr>
+      <!-- END:remise -->
+      <tr class="tva">
+        <td colspan="4" style="text-align: left;"><strong>Total hors frais de livraison</strong></td>
+        <td align="right"><strong>{total_articles}</strong></td>
+        <td class="produit_supp">&nbsp;</td>
+      </tr>
+      <!-- BEGIN:livrable -->
+      <tr>
+        <td colspan="4" style="text-align: left;">Frais de port applicables pour les livraisons vers : {zone_livraison}</td>
+        <td align="right">{frais_port}</td>
+        <td class="produit_supp">&nbsp;</td>
+      </tr>
+      <!-- END:livrable -->
+      <!-- BEGIN:nonlivrable -->
+      <tr class="tva">
+        <td colspan="4" style="text-align: left;">La commande d&eacute;passe le poids autoris&eacute; pour une livraison vers : {zone_livraison}</td>
+        <td align="right">Non livrable</td>
+        <td class="produit_supp">&nbsp;</td>
+      </tr>
+      <!-- END:nonlivrable -->
+      <!-- BEGIN:commande_HT -->
+      <tr>
+        <td colspan="4" style="text-align: left;"><strong>Total HT</strong></td>
+        <td align="right"><strong>{total_HT}</strong></td>
+        <td class="produit_supp">&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="4" style="text-align: left;">TVA</td>
+        <td align="right">{total_TVA}</td>
+        <td class="produit_supp">&nbsp;</td>
+      </tr>
+      <!-- END:commande_HT -->
+      <tr class="ttc">
+        <td colspan="5" class="total" style="text-align: left;"><span style="float: right;">{total_TTC}</span> Total TTC</td>
+        <td class="total produit_supp">&nbsp;</td>
+      </tr>
+    </table>
+    <!-- BEGIN:options_disponibles -->
+    <div class="option_commande">
+      <h2>Envie d'une petite option ?</h2>
+      <table>
+        <!-- BEGIN:option -->
+        <tr class="{type_option}">
+          <!-- BEGIN:simple -->
+          <td><label>
+              <input name="options[]" value="{ref_option}" type="checkbox"/>
+              {intitule_option}</label>
+            <div class="option_desc">{description_option}</div></td>
+          <!-- BEGIN:offerte -->
+          <td>Offert</td>
+          <!-- END:offerte -->
+          <!-- BEGIN:payante -->
+          <td>{prix_option}</td>
+          <!-- END:payante -->
+          <!-- END:simple -->
+          <!-- BEGIN:textarea -->
+          <td><label>
+              <input name="options[]" value="{ref_option}" type="checkbox"/>
+              {intitule_option}</label>
+            <div class="option_desc">{description_option}</div>
+            <textarea name="options_valeurs[{ref_option}]" rows="5">{valeur_option}</textarea></td>
+          <!-- BEGIN:offerte -->
+          <td>Offert</td>
+          <!-- END:offerte -->
+          <!-- BEGIN:payante -->
+          <td>{prix_option}</td>
+          <!-- END:payante -->
+          <!-- END:textarea -->
+          <!-- BEGIN:select -->
+          <td><label>
+              <input name="options[]" value="{ref_option}" type="checkbox"/>
+              {intitule_option}</label>
+            <div class="option_desc">{description_option}</div>
+            <select name="options_valeurs[{ref_option}]">
+              <!-- BEGIN:choix -->
+              <option value="{valeur}" {selected}>{valeur}</option>
+              <!-- END:choix -->
+            </select></td>
+          <!-- BEGIN:offerte -->
+          <td>Offert</td>
+          <!-- END:offerte -->
+          <!-- BEGIN:payante -->
+          <td>{prix_option}</td>
+          <!-- END:payante -->
+          <!-- END:select -->
+          <td class="option_supp">&nbsp;</td>
+        </tr>
+        <!-- END:option -->
+      </table>
+    </div>
+    <!-- END:options_disponibles -->
+    <div class="bon_reduction">
+      <h2> Vous b&eacute;n&eacute;ficiez d'un bon de r&eacute;duction ? </h2>
+      <!-- BEGIN:erreur_bon -->
+      <div class="erreurs">{erreur}</div>
+      <!-- END:erreur_bon -->
+      <label for="reduction">Renseignez le code de votre bon de r&eacute;duction :</label>
+      <input type="text" name="bon" value="{bon}" class="textfield" id="reduction" style="width: 40%;"  />
+    </div>
+    <p>
+      <input type="submit" name="bt_commande" value="Commander" class="submit" title="Commander"/>
+      <input type="submit" name="bt_recalcul" value="Recalculer" class="submit reset" title="Recalculer"/>
+    </p>
+    <input type="hidden" name="act" value="refresh" />
+    <input type="hidden" name="ctl" value="{ctl}" />
+    <p class="a_right"><a href="{lien_continuer}" class="bt_achats" title="Continuez vos achats">Continuez vos achats</a></p>
+  </form>
+  <!-- END:produits -->
+  <!-- BEGIN:noproduits -->
+  <p class="panier_vide">Votre panier est vide. <a href="/" title="Continuez vos achats">Retournez &agrave; l'accueil</a></p>
+  <!-- END:noproduits -->
+</article>
+<!-- END:main -->
