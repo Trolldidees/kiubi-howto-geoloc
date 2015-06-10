@@ -51,8 +51,8 @@ Le plugin jQuery utilisé est Gmap3 et est distribué sous licence GPL v3. Les s
 On rajoute l’inclusion des trois fichiers grâce au module `Injection de code` et on met le code d’inclusion avant la balise `</head>` :
 
 <pre lang="html">
-&lt;script type="text/javascript" src="//{cdn}/js/kiubi.api.pfo.jquery-1.0.min.js">&lt;/script>
-&lt;script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&amp;language=fr">&lt;/script>
+&lt;script type="text/javascript" src="{cdn}/js/kiubi.api.pfo.jquery-1.0.min.js">&lt;/script>
+&lt;script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&amp;amp;language=fr">&lt;/script>
 &lt;script type="text/javascript" src="//cdn.jsdelivr.net/gmap3/5.1.1/gmap3.min.js">&lt;/script>
 </pre>
 
